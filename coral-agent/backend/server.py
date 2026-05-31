@@ -121,12 +121,7 @@ def get_raw_data():
         else:
             raw[key] = {"error": result.get("error", "No data")}
     
-    return jsonify(raw)
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    print(f"\n🏴‍☠️  First Mate Server starting on http://localhost:{port}\n")
-   import os
+    return jsonify(raw) 
 
 if __name__ == "__main__":
     app.run(
