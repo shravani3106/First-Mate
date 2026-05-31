@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Mate — Personal Dev Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #0f1218;
+    --surface2: #161b24;
+    --border: #1e2a3a;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --text: #e8edf5;
+    --text-dim: #6b7a8d;
+    --text-muted: #3d4a5c;
+    --glow: 0 0 20px rgba(0, 212, 255, 0.15);
+    --glow-strong: 0 0 40px rgba(0, 212, 255, 0.3);
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Radial glow top-left */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    padding: 28px 0 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: var(--glow);
+  }
+
+  .logo-text h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .logo-text span {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .header-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.1em;
+    animation: pulse-border 3s ease infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { border-color: var(--accent); color: var(--accent); }
+    50% { border-color: rgba(0,212,255,0.3); color: rgba(0,212,255,0.6); }
+  }
+
+  /* ─── SETUP PANEL ─── */
+  .setup-panel {
+    margin: 40px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    display: none;
+  }
+
+  .setup-panel.visible { display: block; }
+
+  .setup-panel h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .setup-panel p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .mode-tab {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mode-tab.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 700px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-group label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .form-group input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-group input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+  }
+
+  .form-group input::placeholder { color: var(--text-muted); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--glow-strong);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ─── MAIN DASHBOARD ─── */
+  .dashboard {
+    display: none;
+    margin: 32px 0;
+    gap: 24px;
+    flex-direction: column;
+  }
+
+  .dashboard.visible { display: flex; }
+
+  /* Status bar */
+  .status-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent3);
+    box-shadow: 0 0 10px var(--accent3);
+    animation: blink 2s ease infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .status-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    flex: 1;
+  }
+
+  .status-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .chip.ok { border-color: var(--accent3); color: var(--accent3); }
+  .chip.err { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Two column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  /* ─── SUMMARY CARD ─── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-header-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .card-header-icon.blue { background: rgba(0,212,255,0.1); }
+  .card-header-icon.orange { background: rgba(255,107,53,0.1); }
+  .card-header-icon.green { background: rgba(127,255,107,0.1); }
+
+  .card-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: -0.01em;
+  }
+
+  .card-body {
+    padding: 20px;
+  }
+
+  /* Summary markdown content */
+  .summary-content {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    min-height: 200px;
+  }
+
+  .summary-content.loading {
+    color: var(--text-dim);
+    animation: fade-pulse 1.5s ease infinite;
+  }
+
+  @keyframes fade-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ─── CHAT PANEL ─── */
+  .chat-messages {
+    min-height: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 0;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .msg.user .msg-avatar { background: rgba(255,107,53,0.15); }
+  .msg.bot .msg-avatar { background: rgba(0,212,255,0.1); }
+
+  .msg-bubble {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    flex: 1;
+    white-space: pre-wrap;
+  }
+
+  .msg.user .msg-bubble {
+    border-color: rgba(255,107,53,0.2);
+    background: rgba(255,107,53,0.05);
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    resize: none;
+    height: 42px;
+    transition: border-color 0.2s;
+  }
+
+  .chat-input:focus { border-color: var(--accent); }
+
+  .btn-send {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 0 16px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-send:hover { box-shadow: var(--glow); }
+  .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ─── DATA TABLE CARD ─── */
+  .data-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .data-tab {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .data-tab.active {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--accent);
+  }
+
+  .data-view {
+    padding: 16px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .data-view::-webkit-scrollbar { width: 4px; }
+  .data-view::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .data-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-item:last-child { border-bottom: none; }
+
+  .data-item-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .data-item-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .data-item-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 3px;
+  }
+
+  .label-chip {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    margin-right: 4px;
+    margin-top: 2px;
+  }
+
+  /* ─── SQL SHOWCASE ─── */
+  .sql-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.8;
+    color: var(--text-dim);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .sql-kw { color: #ff79c6; }
+  .sql-fn { color: #8be9fd; }
+  .sql-str { color: #f1fa8c; }
+  .sql-cmt { color: #6272a4; }
+
+  /* ─── RESET BUTTON ─── */
+  .btn-reset {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-reset:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: gap;
+  }
+
+  footer p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0,212,255,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Welcome screen */
+  #welcome {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  #welcome .big-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    display: block;
+  }
+
+  #welcome h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  #welcome p {
+    color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    max-width: 480px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+
+  .welcome-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 11px 24px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-outline:hover { border-color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🏴‍☠️</div>
+      <div class="logo-text">
+        <h1>First Mate</h1>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="btn-reset" id="resetBtn" style="display:none" onclick="resetApp()">↩ New Session</button>
+      <div class="header-badge">WeMakeDevs Hackathon</div>
+    </div>
+  </header>
+
+  <!-- WELCOME -->
+  <div id="welcome">
+    <span class="big-icon">⚓</span>
+    <h2>Your Personal Dev First Mate</h2>
+    <p>Connect your GitHub repo and let Coral SQL analyze your open PRs, issues, and commits — then tell you exactly what to work on today.</p>
+    <div class="welcome-btns">
+      <button class="btn-primary" onclick="showSetup('demo')">🎭 Try Demo</button>
+      <button class="btn-outline" onclick="showSetup('real')">🔗 Connect GitHub</button>
+    </div>
+  </div>
+
+  <!-- SETUP PANEL -->
+  <div class="setup-panel" id="setupPanel">
+    <h2>Configure Your Agent</h2>
+    <p>// choose your mode below</p>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tabDemo" onclick="setMode('demo')">🎭 Demo Mode</button>
+      <button class="mode-tab" id="tabReal" onclick="setMode('real')">🔗 Live GitHub</button>
+    </div>
+
+    <div id="realForm" style="display:none">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>GitHub Username</label>
+          <input type="text" id="githubUsername" placeholder="your-username">
+        </div>
+        <div class="form-group">
+          <label>Repo Owner</label>
+          <input type="text" id="repoOwner" placeholder="org-or-username">
+        </div>
+        <div class="form-group">
+          <label>Repository Name</label>
+          <input type="text" id="repoName" placeholder="my-repo">
+        </div>
+      </div>
+      <p style="color:var(--text-dim);font-family:'Space Mono',monospace;font-size:0.72rem;margin-bottom:16px">
+        ⚠️ Make sure Coral is installed and GitHub source is configured before using Live mode.<br>
+        Run: <code style="color:var(--accent)">coral source add --interactive github</code>
+      </p>
+    </div>
+
+    <button class="btn-primary" id="launchBtn" onclick="launchAgent()">
+      <span id="launchLabel">🚀 Launch First Mate</span>
+    </button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <div class="status-text" id="statusText">Agent active — data fetched successfully</div>
+      <div class="status-chips" id="statusChips"></div>
+    </div>
+
+    <!-- SQL Showcase + Data -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon green">⚡</div>
+        <span class="card-title">Coral SQL — Live Queries</span>
+      </div>
+      <div class="card-body">
+        <div class="sql-box"><span class="sql-cmt">-- Coral joins GitHub sources in a single query</span>
+<span class="sql-kw">SELECT</span> <span class="sql-str">'PR: '</span> || title <span class="sql-kw">AS</span> item, number, updated_at <span class="sql-kw">AS</span> time
+  <span class="sql-kw">FROM</span> github.pulls
+  <span class="sql-kw">WHERE</span> state = <span class="sql-str">'open'</span>
+<span class="sql-kw">UNION ALL</span>
+<span class="sql-kw">SELECT</span> <span class="sql-str">'Issue: '</span> || title, number, created_at
+  <span class="sql-kw">FROM</span> github.issues
+  <span class="sql-kw">WHERE</span> state = <span class="sql-str">'open'</span>
+<span class="sql-kw">ORDER BY</span> time <span class="sql-kw">DESC</span>;</div>
+      </div>
+
+      <div class="data-tabs">
+        <button class="data-tab active" onclick="switchTab('prs', this)">Open PRs</button>
+        <button class="data-tab" onclick="switchTab('issues', this)">Open Issues</button>
+        <button class="data-tab" onclick="switchTab('commits', this)">Recent Commits</button>
+      </div>
+      <div class="data-view" id="dataView">
+        <div style="color:var(--text-dim);font-family:'Space Mono',monospace;font-size:0.8rem;padding:20px 0">Loading data...</div>
+      </div>
+    </div>
+
+    <!-- Two column: Summary + Chat -->
+    <div class="two-col">
+
+      <!-- Summary -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon blue">🤖</div>
+          <span class="card-title">Daily Brief — Claude Analysis</span>
+        </div>
+        <div class="card-body">
+          <div class="summary-content loading" id="summaryContent">Analyzing your data...</div>
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon orange">💬</div>
+          <span class="card-title">Ask First Mate</span>
+        </div>
+        <div class="card-body">
+          <div class="chat-messages" id="chatMessages">
+            <div class="msg bot">
+              <div class="msg-avatar">🏴‍☠️</div>
+              <div class="msg-bubble">Ahoy! Ask me anything about your work — PRs to review, what to prioritize, or what your teammates are up to.</div>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <textarea class="chat-input" id="chatInput" placeholder="What should I focus on first?" rows="1" onkeydown="handleKey(event)"></textarea>
+            <button class="btn-send" id="sendBtn" onclick="sendMessage()">Send ↑</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <p>Built with <a href="https://withcoral.com" target="_blank">Coral</a> + <a href="https://anthropic.com" target="_blank">Claude</a> for WeMakeDevs Hackathon 2026</p>
+    <p>Pirates of the Coral-bean 🏴‍☠️</p>
+  </footer>
+</div>
+
+<script>
+  const API = 'http://localhost:5000/api';
+  let sessionId = null;
+  let currentMode = 'demo';
+  let rawData = {};
+
+  function showSetup(mode) {
+    document.getElementById('welcome').style.display = 'none';
+    document.getElementById('setupPanel').classList.add('visible');
+    setMode(mode);
+  }
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('tabDemo').classList.toggle('active', mode === 'demo');
+    document.getElementById('tabReal').classList.toggle('active', mode === 'real');
+    document.getElementById('realForm').style.display = mode === 'real' ? 'block' : 'none';
+  }
+
+  async function launchAgent() {
+    const btn = document.getElementById('launchBtn');
+    const label = document.getElementById('launchLabel');
+    btn.disabled = true;
+    label.innerHTML = '<span class="spinner"></span> Fetching data...';
+
+    const body = { mode: currentMode };
+    if (currentMode === 'real') {
+      body.github_username = document.getElementById('githubUsername').value.trim();
+      body.repo_owner = document.getElementById('repoOwner').value.trim();
+      body.repo = document.getElementById('repoName').value.trim();
+    }
+
+    try {
+      const res = await fetch(`${API}/fetch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Server error');
+      }
+
+      const data = await res.json();
+      sessionId = data.session_id;
+
+      // Show dashboard
+      document.getElementById('setupPanel').classList.remove('visible');
+      document.getElementById('dashboard').classList.add('visible');
+      document.getElementById('resetBtn').style.display = 'block';
+
+      // Update status
+      document.getElementById('statusText').textContent =
+        `Session: ${sessionId} — ${data.fetched.length} sources queried via Coral SQL`;
+
+      const chipsEl = document.getElementById('statusChips');
+      data.fetched.forEach(f => {
+        const chip = document.createElement('div');
+        chip.className = 'chip ' + (f.includes('error') ? 'err' : 'ok');
+        chip.textContent = f;
+        chipsEl.appendChild(chip);
+      });
+
+      // Show summary
+      const summaryEl = document.getElementById('summaryContent');
+      summaryEl.classList.remove('loading');
+      summaryEl.textContent = data.summary;
+
+      // Load raw data for tables
+      await loadRawData();
+
+    } catch (e) {
+      alert('Error: ' + e.message + '\n\nMake sure the Python server is running:\ncd backend && python server.py');
+    } finally {
+      btn.disabled = false;
+      label.innerHTML = '🚀 Launch First Mate';
+    }
+  }
+
+  async function loadRawData() {
+    try {
+      const res = await fetch(`${API}/raw`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      rawData = await res.json();
+      renderTab('prs');
+    } catch(e) {
+      console.error('Raw data error:', e);
+    }
+  }
+
+  function switchTab(tab, el) {
+    document.querySelectorAll('.data-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderTab(tab);
+  }
+
+  function renderTab(tab) {
+    const view = document.getElementById('dataView');
+    let items = [];
+
+    if (tab === 'prs') items = rawData.open_prs || [];
+    else if (tab === 'issues') items = rawData.open_issues || [];
+    else if (tab === 'commits') items = rawData.recent_commits || [];
+
+    if (!Array.isArray(items) || items.length === 0) {
+      view.innerHTML = `<div style="color:var(--text-dim);font-family:'Space Mono',monospace;font-size:0.8rem;padding:20px 0">
+        ${items?.error || 'No data available'}
+      </div>`;
+      return;
+    }
+
+    view.innerHTML = items.map(item => {
+      if (tab === 'prs') {
+        const date = item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '';
+        return `<div class="data-item">
+          <div class="data-item-num">#${item.number}</div>
+          <div>
+            <div class="data-item-title">${escHtml(item.title)}</div>
+            <div class="data-item-meta">Updated ${date} · ${item.state}</div>
+          </div>
+        </div>`;
+      } else if (tab === 'issues') {
+        const date = item.created_at ? new Date(item.created_at).toLocaleDateString() : '';
+        const labels = Array.isArray(item.labels) ? item.labels.map(l =>
+          `<span class="label-chip">${escHtml(l)}</span>`).join('') : '';
+        return `<div class="data-item">
+          <div class="data-item-num">#${item.number}</div>
+          <div>
+            <div class="data-item-title">${escHtml(item.title)}</div>
+            <div class="data-item-meta">${date} ${labels}</div>
+          </div>
+        </div>`;
+      } else {
+        const date = item.committed_at ? new Date(item.committed_at).toLocaleDateString() : '';
+        const sha = item.sha ? item.sha.slice(0,7) : '';
+        return `<div class="data-item">
+          <div class="data-item-num">${sha}</div>
+          <div>
+            <div class="data-item-title">${escHtml(item.message || '')}</div>
+            <div class="data-item-meta">${escHtml(item.author__name || '')} · ${date}</div>
+          </div>
+        </div>`;
+      }
+    }).join('');
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg || !sessionId) return;
+
+    const chatEl = document.getElementById('chatMessages');
+
+    // Add user message
+    chatEl.innerHTML += `<div class="msg user">
+      <div class="msg-avatar">👤</div>
+      <div class="msg-bubble">${escHtml(msg)}</div>
+    </div>`;
+
+    input.value = '';
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+
+    // Add loading bot message
+    const loadingId = 'loading-' + Date.now();
+    chatEl.innerHTML += `<div class="msg bot" id="${loadingId}">
+      <div class="msg-avatar">🏴‍☠️</div>
+      <div class="msg-bubble" style="color:var(--text-dim)"><span class="spinner"></span> thinking...</div>
+    </div>`;
+    chatEl.scrollTop = chatEl.scrollHeight;
+
+    try {
+      const res = await fetch(`${API}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, message: msg })
+      });
+      const data = await res.json();
+
+      document.getElementById(loadingId).outerHTML = `<div class="msg bot">
+        <div class="msg-avatar">🏴‍☠️</div>
+        <div class="msg-bubble">${escHtml(data.reply)}</div>
+      </div>`;
+    } catch(e) {
+      document.getElementById(loadingId).outerHTML = `<div class="msg bot">
+        <div class="msg-avatar">🏴‍☠️</div>
+        <div class="msg-bubble" style="color:var(--accent2)">Error: ${e.message}</div>
+      </div>`;
+    } finally {
+      sendBtn.disabled = false;
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function resetApp() {
+    sessionId = null;
+    rawData = {};
+    document.getElementById('dashboard').classList.remove('visible');
+    document.getElementById('setupPanel').classList.remove('visible');
+    document.getElementById('welcome').style.display = 'block';
+    document.getElementById('resetBtn').style.display = 'none';
+    document.getElementById('statusChips').innerHTML = '';
+    document.getElementById('chatMessages').innerHTML = `<div class="msg bot">
+      <div class="msg-avatar">🏴‍☠️</div>
+      <div class="msg-bubble">Ahoy! Ask me anything about your work — PRs to review, what to prioritize, or what your teammates are up to.</div>
+    </div>`;
+    document.getElementById('summaryContent').textContent = 'Analyzing your data...';
+    document.getElementById('summaryContent').classList.add('loading');
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
